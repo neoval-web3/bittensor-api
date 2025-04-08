@@ -164,4 +164,4 @@ Si vous rencontrez des problèmes, vérifiez les logs du serveur et utilisez les
 
 ## Licence
 
-MIT
+xxx
