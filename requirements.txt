@@ -19,6 +19,7 @@ colorama==0.4.6
 cryptography==43.0.3
 cytoolz==1.0.1
 decorator==5.2.1
+dnspython==2.7.0
 eth-hash==0.7.1
 eth-typing==5.2.0
 eth-utils==2.2.2
@@ -49,6 +50,7 @@ pycryptodome==3.22.0
 pydantic==2.11.3
 pydantic_core==2.33.1
 Pygments==2.19.1
+pymongo==4.12.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 python-Levenshtein==0.27.1
