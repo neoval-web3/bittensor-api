@@ -464,6 +464,16 @@ async def trpc_batch_endpoint(
     batch: Optional[int] = None,
     batch_size: int = 32
 ):
+    """
+    Emulate tRPC batch endpoint functionality.
+    This handles batched requests like delegates.getDelegates4,subnets.getSubnetsNameAndSymbol
+    Supports both GET and POST methods for compatibility.
+    
+    Args:
+        procedures: Comma-separated list of procedure names
+        batch: Batch number for paginated results
+        batch_size: Number of results per batch (default: 32)
+    """
     procedure_list = procedures.split(',')
 
     if request.method == "GET":
@@ -479,6 +489,7 @@ async def trpc_batch_endpoint(
         except Exception:
             input_data = {}
 
+    # Load validator metadata
     metadata_path = os.path.join("data", "validator_metadata.json")
     if os.path.exists(metadata_path):
         with open(metadata_path, "r") as f:
@@ -486,17 +497,24 @@ async def trpc_batch_endpoint(
     else:
         validator_metadata = {}
 
+    # Debug: Check database content
+    docs = list(validators_collection.find({}, {"_id": 0}))
+    print(f"Found {len(docs)} validators in database")
+
     response_data = []
 
     for i, proc in enumerate(procedure_list):
         if proc == "delegates.getDelegates4":
-            from main import get_validators
+            # Use the function directly from the current module
             result = get_validators(
                 sort_by="total_stake",
                 sort_order="desc",
                 batch=batch,
                 batch_size=batch_size
             )
+
+            # Debug output for troubleshooting
+            print(f"Retrieved {len(result['data'])} validators for batch {batch}")
 
             for idx, item in enumerate(result["data"]):
                 meta = validator_metadata.get(item["hotkey"], {})
@@ -517,7 +535,7 @@ async def trpc_batch_endpoint(
             })
 
         elif proc == "subnets.getSubnetsNameAndSymbol":
-            from main import get_subnets
+            # Use the function directly from the current module
             result = get_subnets()
             response_data.append({
                 "result": {
