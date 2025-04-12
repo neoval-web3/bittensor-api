@@ -1,0 +1,21 @@
+services:
+  mongo:
+    image: mongo:6.0
+    platform: linux/amd64  # <-- Important
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build:
+      context: .
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"
+
+
+volumes:
+  mongo-data:

@@ -1,167 +1,154 @@
-# Bittensor APY API
+# 🧠 Bittensor API
 
-## Description
+API FastAPI permettant de récupérer les données des validateurs et des subnets du réseau Bittensor, dans un format compatible avec TaoYield.
 
-Cette API permet de récupérer et d'exposer les données de rendement (APY) des validateurs et subnets du réseau Bittensor, similaire à celle utilisée par taoyield.com. Elle utilise le SDK Bittensor pour communiquer directement avec la blockchain et calculer les APY pour chaque validateur et subnet.
+---
 
-## Fonctionnalités
+## 📁 Structure du projet
 
-- Récupération des données de tous les validateurs avec leurs APY
-- Récupération des informations sur tous les subnets
-- Calcul précis des APY basé sur les émissions et les stakes
-- Système de cache pour optimiser les performances
-- Endpoints de débogage pour faciliter le développement
-
-## Prérequis
-
-- Python 3.8+
-- pip (gestionnaire de paquets Python)
-- Accès à internet pour communiquer avec le réseau Bittensor
-
-## Installation
-
-### 1. Cloner le dépôt
-
-```bash
-git clone https://github.com/votre-username/bittensor-apy-api.git
-cd bittensor-apy-api
+```
+bittensor-api/
+├── main.py                # Point d'entrée principal de l'API
+├── api.py                 # Déclaration des endpoints FastAPI
+├── metadata_sync.py       # Script pour synchroniser les métadonnées des validateurs
+├── apy_calculator.py      # Calculs APY à partir des données on-chain
+├── requirements.txt       # Dépendances Python
+├── docker-compose.yml     # Déploiement via Docker
+├── Dockerfile             # Image API + Rust + Python
+├── data/                  # Métadonnées statiques (ex: validator_metadata.json)
+├── utils/                 # Fonctions utilitaires
+├── tao_apy_calculator/        # Code source de TaoYield pour les calculs de rendement
+└── .env / env_example     # Variables d'environnement
 ```
 
-### 2. Créer un environnement virtuel
+---
+
+## ⚙️ Prérequis
+
+- Python 3.10+
+- MongoDB local ou distant
+- Docker (optionnel mais recommandé pour un setup rapide)
+
+---
+
+## 📄 Configuration `.env`
+
+Avant de lancer l'API, créez un fichier `.env` à la racine du projet. Vous pouvez utiliser `env_example` comme modèle :
 
 ```bash
-# Créer un environnement virtuel
-python -m venv env
+cp env_example .env
+```
 
-# Activer l'environnement virtuel
-# Sur Windows
-env\Scripts\activate
-# Sur macOS/Linux
+Exemple de contenu :
+
+```
+NODE_URL=wss://archive.chain.opentensor.ai:443
+BATCH_SIZE=100
+MONGO_URL=""
+```
+
+> 🔒 Si `MONGO_URL` n’est pas défini ou est égal à `mongodb://mongo:27017/`, l’API utilisera automatiquement l’instance MongoDB locale (utile en environnement Docker).
+
+---
+
+## 🚀 Lancement en local (sans Docker)
+
+1. Créez un environnement virtuel et installez les dépendances :
+
+```bash
+python3 -m venv env
 source env/bin/activate
-```
-
-### 3. Installer les dépendances
-
-```bash
 pip install -r requirements.txt
 ```
 
-## Utilisation
-
-### Démarrer l'API
+2. Lancez l’API :
 
 ```bash
-python api.py
+python main.py
 ```
 
-L'API sera accessible à l'adresse `http://localhost:8000`.
+3. Accédez à l'API sur [http://localhost:8000](http://localhost:8000)
 
-### Endpoints disponibles
+---
 
-- **GET /api/status** - Vérifier si l'API est opérationnelle
-- **GET /api/trpc/delegates.getDelegates4** - Récupérer les données des délégués
-- **GET /api/trpc/subnets.getSubnetsNameAndSymbol** - Récupérer les informations sur les subnets
-- **GET /api/trpc/delegates.getDelegates4,subnets.getSubnetsNameAndSymbol** - Récupérer les délégués et les subnets en une seule requête
+## 🐳 Lancement avec Docker
 
-### Endpoints de débogage
+> Nécessite Docker et Docker Compose.
 
-- **GET /api/debug/delegates** - Examiner la structure des délégués
-- **GET /api/debug/subnets** - Examiner la structure des subnets
-- **GET /api/debug/apy** - Examiner le calcul des APY
-
-## Déploiement
-
-### Avec Docker
-
-1. Construire l'image Docker
-```bash
-docker build -t bittensor-apy-api .
-```
-
-2. Exécuter le conteneur
-```bash
-docker run -d -p 8000:8000 --name bittensor-api bittensor-apy-api
-```
-
-### Avec Docker Compose
+1. Build & run l’API avec MongoDB intégré :
 
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
-## Configuration
+2. L’API sera disponible sur [http://localhost:8000](http://localhost:8000)
 
-La configuration de l'API peut être modifiée dans le fichier `api.py` :
+> 📦 MongoDB tourne dans un conteneur nommé `bittensor-api-mongo`. Les données sont persistées dans le volume `mongo-data`.
 
-- **CACHE_DURATION** - Durée de validité du cache (par défaut : 5 minutes)
-- **Réseau Bittensor** - Mainnet (`"finney"`) ou testnet (`"nobunaga"`)
+---
 
-## Structure de la réponse API
+## 🛠️ Customisation
 
-Voici un exemple de la structure de données renvoyée par l'endpoint principal :
+- Si vous avez déjà une instance MongoDB (locale ou distante), mettez l’URL dans le fichier `.env` :
+  ```
+  MONGO_URL=mongodb://username:password@host:27017/bittensor-api?authSource=admin
+  ```
+- Le fallback automatique sur `"mongodb://localhost:27017/"` sera utilisé uniquement si aucun `MONGO_URL` valide n’est fourni.
 
-```json
-{
-    "0": {
-        "result": {
-            "data": {
-                "delegates": [
-                    {
-                        "hotkey": "5FEYsPgLA22e41THYyH4waiMHRDYrjQUxr6dDwmuZ3DPxtuP",
-                        "coldkey": "5F953EH5EVc9BUKYLhktAdzH1waVdgEtwyh5ygTrwCuJkwML",
-                        "nominator": "5F953EH5EVc9BUKYLhktAdzH1waVdgEtwyh5ygTrwCuJkwML",
-                        "name": "Validator 5FEYsPgL",
-                        "take": 17.9995422293431,
-                        "validatorPermit": true,
-                        "totalDelegated": 2392.9784102709996,
-                        "staked": {
-                            "39": 2392.976335057,
-                            "0": 0.002075214
-                        },
-                        "totalStaked": 2392.978410271,
-                        "apy": 0.15,
-                        "subnet": {
-                            "39": 0.15
-                        },
-                        "nominatorApy": 0.12
-                    }
-                ]
-            }
-        }
-    },
-    "1": {
-        "result": {
-            "data": {
-                "subnets": [
-                    {
-                        "netuid": 0,
-                        "name": "Subnet 0",
-                        "symbol": "SN0"
-                    },
-                    {
-                        "netuid": 1,
-                        "name": "Subnet 1",
-                        "symbol": "SN1"
-                    }
-                ]
-            }
-        }
-    }
-}
+## API Usage
+
+### TRPC-Compatible Endpoint
+
+The main entry point is a batch endpoint similar to `trpc` usage:
+```
+GET /api/trpc/delegates.getDelegates4,subnets.getSubnetsNameAndSymbol
 ```
 
-## Maintenance
+This returns a batch response with:
 
-Pour mettre à jour les dépendances :
+- Index `0` = list of validators
+- Index `1` = list of known subnets
 
-```bash
-pip install --upgrade -r requirements.txt
+Query parameters:
+- `batch`: Page index (0-based)
+- `batch_size`: Number of items per batch (default 32)
+
+**Example:**
+```
+curl "http://localhost:8000/api/trpc/delegates.getDelegates4,subnets.getSubnetsNameAndSymbol?batch=0&batch_size=32"
 ```
 
-## Dépannage
+### REST Endpoints
 
-Si vous rencontrez des problèmes, vérifiez les logs du serveur et utilisez les endpoints de débogage pour diagnostiquer les problèmes.
+- `/api/validators`  
+  Returns all validators, supports:
+  - `sort_by=total_stake|subnet_stake`
+  - `sort_order=asc|desc`
+  - `subnet_id=XX` (to filter validators active in subnet)
+  - `batch=0` and `batch_size=32` for pagination
 
-## Licence
+- `/api/validators/{hotkey}`  
+  Returns details for a specific validator
 
-xxx
+- `/api/validators/subnet/{subnet_id}`  
+  Returns validators filtered by subnet
+
+- `/api/subnets`  
+  Returns all known subnets with name and symbol
+
+### Admin Endpoint
+
+For updating subnet metadata manually:
+```
+POST /api/admin/update-subnet
+Query params:
+- netuid
+- name
+- symbol
+- admin_key (must match ADMIN_KEY in .env)
+```
+
+**Example:**
+```
+curl -X POST "http://localhost:8000/api/admin/update-subnet?netuid=5&name=CustomSubnet&symbol=CS&admin_key=your_key"
+```
