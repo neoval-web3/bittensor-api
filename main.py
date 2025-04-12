@@ -12,6 +12,9 @@ from pymongo.errors import CollectionInvalid
 from datetime import datetime
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
+from bittensor import AsyncSubtensor
+
+import asyncio
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -310,9 +313,42 @@ def get_validators(
     
     return result
 
+
+async def pull_subnets():
+    """Get all subnets with their names and symbols from subtensor RPC."""
+    try:
+        node_url = os.getenv("NODE_URL")
+        async with AsyncSubtensor(node_url) as subtensor:
+            subnets_data = await asyncio.wait_for(subtensor.get_subnets(), timeout=30)
+
+            result = []
+            for subnet in subnets_data:
+                # Handle both int and object format
+                if isinstance(subnet, int):
+                    result.append({
+                        "netuid": str(subnet),
+                        "name": f"Subnet {subnet}",
+                        "symbol": f"NET{subnet}",
+                        "last_updated": datetime.now().isoformat()
+                    })
+                else:
+                    result.append({
+                        "netuid": str(subnet.netuid),
+                        "name": getattr(subnet, "name", f"Subnet {subnet.netuid}"),
+                        "symbol": getattr(subnet, "symbol", f"NET{subnet.netuid}"),
+                        "last_updated": datetime.now().isoformat()
+                    })
+
+            return result
+
+    except Exception as e:
+        print(f"❌ Failed to fetch subnets from subtensor: {e}")
+        return []
+
 @app.get("/api/subnets")
-def get_subnets():
+async def get_subnets():
     """Get all subnets with their names and symbols."""
+    return await pull_subnets()
     # Sample subnet data if not in DB yet
     default_subnets = {
         "0": {"name": "Foundational Subnet", "symbol": "ROOT"},
