@@ -1,3 +1,5 @@
+!!! There is probably some little issues in APYs calculation !!!
+
 # 🧠 Bittensor API
 
 API FastAPI permettant de récupérer les données des validateurs et des subnets du réseau Bittensor, dans un format compatible avec TaoYield.
